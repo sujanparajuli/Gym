@@ -1,6 +1,6 @@
 # Repbook
 
-[Open your gym tracker](https://sujan-repbook.sujanparajuli786.chatgpt.site)
+[Open your gym tracker](https://gym.sujanparajuli786.chatgpt.site)
 
 Black-and-white workout journal with Push, Pull and Leg routines; separate weight and rep inputs for every set; lb/kg; private saved history; weekly Monday–Sunday tracking and exercise progress charts. No photos.
 
