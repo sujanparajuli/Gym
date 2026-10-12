@@ -8,6 +8,20 @@
       "when": 1790939460471,
       "tag": "0000_giant_human_cannonball",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1791848512131,
+      "tag": "0001_overconfident_stone_men",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1791848970581,
+      "tag": "0002_wise_changeling",
+      "breakpoints": true
     }
   ]
 }
