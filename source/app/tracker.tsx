@@ -7,12 +7,12 @@ import {ResponsiveContainer,LineChart,Line,XAxis,YAxis,Tooltip,CartesianGrid} fr
 type Exercise={name:string;sets:{weight:string;reps:string}[]};
 type Workout={id:string;date:string;name:string;unit:string;exercises:{name:string;sets:{weight:number;reps:number}[]}[]};
 const routines:Record<string,string[]>={
-  'Push day':['Incline dumbbell press','Flyes','Lateral raise','Shoulder press','Triceps pushdown'],
-  'Pull day':['T-bar row','Row','Lat pulldown'],
-  'Leg day':['Squat','Leg press','Bulgarian split squat','Hamstring curl','Leg extension','Romanian deadlift (RDL)','Biceps curl'],
+  'Push day':['Dumbbell press','Flyes','Lateral raise','Shoulder press','Triceps extension'],
+  'Pull day':['Lat pulldown','Row','T-bar row','Face pulls','Biceps curl'],
+  'Leg day':['Squat','Leg press','Hammer curl','Leg extension'],
 };
-const names=Array.from(new Set([...Object.values(routines).flat(),'Bench press','Deadlift','Dumbbell shoulder press','Seated row','Other']));
-const newExercise=(name='Incline dumbbell press'):Exercise=>({name,sets:[{weight:'',reps:''},{weight:'',reps:''},{weight:'',reps:''}]});
+const names=Array.from(new Set([...Object.values(routines).flat(),'Incline dumbbell press','Triceps pushdown','Bulgarian split squat','Hamstring curl','Romanian deadlift (RDL)','Bench press','Deadlift','Dumbbell shoulder press','Seated row','Other']));
+const newExercise=(name='Dumbbell press'):Exercise=>({name,sets:[{weight:'',reps:''},{weight:'',reps:''},{weight:'',reps:''}]});
 const routineExercises=(routine:string)=>routines[routine].map(n=>newExercise(n));
 const today=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
 function weekMonday(date:string){const d=new Date(date+'T12:00:00');d.setDate(d.getDate()-((d.getDay()+6)%7));return formatDate(d);}
@@ -21,7 +21,7 @@ function addDays(date:string,days:number){const d=new Date(date+'T12:00:00');d.s
 function prettyDate(date:string){return new Date(date+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric'});}
 function Picker({value,onChange,options,label}:{value:string;onChange:(v:string)=>void;options:string[];label:string}){return <Select value={value} onValueChange={onChange}><SelectTrigger aria-label={label}><SelectValue/></SelectTrigger><SelectContent>{options.map(n=><SelectItem key={n} value={n}>{n}</SelectItem>)}</SelectContent></Select>}
 export default function Tracker(){
-const [exercises,setExercises]=useState<Exercise[]>(routineExercises('Push day'));const [date,setDate]=useState('');const [name,setName]=useState('Push day');const [unit,setUnit]=useState('lb');const [history,setHistory]=useState<Workout[]>([]);const [busy,setBusy]=useState(false);const [loading,setLoading]=useState(true);const [message,setMessage]=useState('');const [chartExercise,setChartExercise]=useState('Incline dumbbell press');const [tab,setTab]=useState('workout');const [draftId,setDraftId]=useState('');const [week,setWeek]=useState('');const [selectedDay,setSelectedDay]=useState<string|null>(null);const [routine,setRoutine]=useState('Push day');const [drafts,setDrafts]=useState<Record<string,{exercises:Exercise[];name:string;id:string}>>({});
+const [exercises,setExercises]=useState<Exercise[]>(routineExercises('Push day'));const [date,setDate]=useState('');const [name,setName]=useState('Push day');const [unit,setUnit]=useState('lb');const [history,setHistory]=useState<Workout[]>([]);const [busy,setBusy]=useState(false);const [loading,setLoading]=useState(true);const [message,setMessage]=useState('');const [chartExercise,setChartExercise]=useState('Dumbbell press');const [tab,setTab]=useState('workout');const [draftId,setDraftId]=useState('');const [week,setWeek]=useState('');const [selectedDay,setSelectedDay]=useState<string|null>(null);const [routine,setRoutine]=useState('Push day');const [drafts,setDrafts]=useState<Record<string,{exercises:Exercise[];name:string;id:string}>>({});
 async function load(){try{const r=await fetch('/api/workouts');if(!r.ok)throw new Error(((await r.json()) as {error:string}).error);setHistory(await r.json());}catch(e){setMessage(e instanceof Error?e.message:'Unable to load history');}finally{setLoading(false);}}
 useEffect(()=>{setDate(today());setWeek(weekMonday(today()));setDraftId(crypto.randomUUID());load();},[]);
 useEffect(()=>{const context=(document as any).modelContext;if(!context?.registerTool)return;const life=new AbortController();Promise.resolve(context.registerTool({name:'read_workout_history',description:'Read the saved gym workouts shown in this tracker.',inputSchema:{type:'object',properties:{},additionalProperties:false},annotations:{readOnlyHint:true},execute:async(input:any)=>{if(!input||Object.keys(input).length)throw new Error('No input fields accepted');const r=await fetch('/api/workouts');if(!r.ok)throw new Error('History unavailable');return await r.json();}},{signal:life.signal})).catch(()=>{});return()=>life.abort();},[]);

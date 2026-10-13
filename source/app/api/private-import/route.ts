@@ -1,0 +1,9 @@
+import {env} from 'cloudflare:workers';
+import {database} from '@/db/raw';
+import {foodSchema,profileSchema} from '@/lib/nutrition';
+import {z} from 'zod';
+const schema=z.object({owner:z.string().min(1).max(200),profile:profileSchema,foods:z.array(foodSchema).max(20)});
+const reply=(data:unknown,status=200)=>Response.json(data,{status,headers:{'Cache-Control':'private, no-store'}});
+// A short-lived, owner-authorized import: all targets and data come from private runtime configuration.
+// No visitor-supplied owner, profile, or meal payload is accepted. Disabled when the private token is removed.
+export async function POST(request:Request){const vars=env as unknown as Record<string,string>;const token=vars.REPBOOK_PRIVATE_IMPORT_TOKEN;if(!token||request.headers.get('x-repbook-import')!==token)return reply({error:'Import unavailable.'},403);if(request.headers.has('origin'))return reply({error:'Import unavailable.'},403);try{const input=schema.parse(JSON.parse(vars.REPBOOK_PRIVATE_IMPORT||''));const db=database();const old=await db.prepare('SELECT profile FROM nutrition_profiles WHERE owner=?').bind(input.owner).first<{profile:string}>();const profile=profileSchema.parse({...input.profile,...(old?JSON.parse(old.profile):{}),proteinOverride:input.profile.proteinOverride});const commands=[db.prepare('INSERT INTO nutrition_profiles(owner,profile) VALUES (?,?) ON CONFLICT(owner) DO UPDATE SET profile=excluded.profile').bind(input.owner,JSON.stringify(profile)),...input.foods.map(f=>db.prepare('INSERT INTO food_entries(id,owner,date,payload) VALUES (?,?,?,?) ON CONFLICT(id) DO NOTHING').bind(f.id,input.owner,f.date,JSON.stringify(f)))];await db.batch(commands);return reply({imported:true,entryCount:input.foods.length,proteinTarget:profile.proteinOverride});}catch{return reply({error:'Private import could not complete.'},503);}}
